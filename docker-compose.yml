@@ -1,0 +1,45 @@
+services:
+  tkd_db:
+    image: mysql:8.0
+    container_name: tkd_db
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: escuela_taekwondo
+      MYSQL_ROOT_PASSWORD: Tkd_Dev_2026!
+    ports:
+      - "3306:3306"
+    volumes:
+      - tkd_db_data:/var/lib/mysql
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-pTkd_Dev_2026!"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  tkd_pos:
+    build:
+      context: ./tkd_pos
+      dockerfile: Dockerfile
+    container_name: tkd_pos
+    working_dir: /var/www/html
+    volumes:
+      - ./tkd_pos:/var/www/html
+    ports:
+      - "8000:8000"
+    env_file:
+      - ./tkd_pos/.env
+    environment:
+      DB_CONNECTION: mysql
+      DB_HOST: tkd_db
+      DB_PORT: 3306
+      DB_DATABASE: escuela_taekwondo
+      DB_USERNAME: root
+      DB_PASSWORD: Tkd_Dev_2026!
+    depends_on:
+      tkd_db:
+        condition: service_healthy
+    command: php artisan serve --host=0.0.0.0 --port=8000
+
+volumes:
+  tkd_db_data:
