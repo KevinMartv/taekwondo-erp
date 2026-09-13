@@ -1,4 +1,1 @@
-nano .env
-nano .env.example
-nano .docker-composer.yml
-
+.env
