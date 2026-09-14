@@ -4,20 +4,21 @@ namespace App\Http\Controllers;
 
 use App\Models\Pago;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class PagoController extends Controller
 {
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'alumno_id' => 'required|integer',
+            'alumno_id' => ['required', 'integer', Rule::exists('alumnos', 'id')],
             'monto' => 'required|numeric|min:0.01',
             'metodo_pago' => 'required|in:efectivo,transferencia',
             'numero_rastreo' => 'required_if:metodo_pago,transferencia|string|nullable',
             'ciclo_pago' => 'required|in:mes,quincena',
             'periodo_cubierto' => 'required|date',
             'fecha_pago' => 'required|date',
-        ]);
+            ]);
 
         
         $validated['estado'] = 'pagado'; 

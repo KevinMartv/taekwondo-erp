@@ -41,6 +41,22 @@ services:
       - ./tkd_pos:/app
     depends_on:
       - tkd_db
+  tkd_portal:
+    image: bitnami/laravel:latest 
+    working_dir: /app
+    entrypoint: ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8000"]
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./tkd_portal:/app
+    environment:
+      - DB_HOST=tkd_db
+      - DB_PORT=3306
+      - DB_DATABASE=escuela_taekwondo
+      - DB_USERNAME=root
+      - DB_PASSWORD=${DB_ROOT_PASSWORD}
+    depends_on:
+      - tkd_db
 
 volumes:
   db_data:
