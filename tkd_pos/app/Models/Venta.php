@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-#[Fillable(['alumno_id', 'fecha', 'total', 'metodo_pago'])]
+#[Fillable(['alumno_id', 'fecha', 'total', 'metodo_pago', 'estado', 'referencia'])]
 class Venta extends Model
 {
     /**
@@ -29,5 +29,34 @@ class Venta extends Model
     public function detalles(): HasMany
     {
         return $this->hasMany(DetalleVenta::class);
+    }
+
+    public function totalFormateado(): string
+    {
+        return number_format((float) $this->total, 2, '.', '');
+    }
+
+    public function tokenPago(): string
+    {
+        return hash_hmac('sha256', $this->id.'|'.$this->totalFormateado(), (string) config('services.pagos.secret'));
+    }
+
+    public function urlModuloPago(?string $returnUrl = null): string
+    {
+        $pagosUrl = rtrim((string) config('services.pagos.url'), '/');
+        $query = http_build_query([
+            'venta_id' => $this->id,
+            'referencia' => $this->referencia,
+            'total' => $this->totalFormateado(),
+            'token' => $this->tokenPago(),
+            'return_url' => $returnUrl ?? route('compra.show', $this),
+        ]);
+
+        return "{$pagosUrl}/pagar?{$query}";
+    }
+
+    public function estaPagada(): bool
+    {
+        return $this->estado === 'pagada';
     }
 }

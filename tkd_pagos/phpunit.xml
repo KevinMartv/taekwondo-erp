@@ -32,5 +32,8 @@
         <env name="PULSE_ENABLED" value="false"/>
         <env name="TELESCOPE_ENABLED" value="false"/>
         <env name="NIGHTWATCH_ENABLED" value="false"/>
+        <env name="POS_URL" value="http://pos.test"/>
+        <env name="POS_PUBLIC_URL" value="http://pos.test"/>
+        <env name="PAGO_SECRET" value="test-secret"/>
     </php>
 </phpunit>

@@ -35,4 +35,9 @@ return [
         ],
     ],
 
+    'pagos' => [
+        'url' => env('PAGOS_URL', 'http://localhost:8002'),
+        'secret' => env('PAGO_SECRET', 'tkd-dev-pago-secret'),
+    ],
+
 ];
