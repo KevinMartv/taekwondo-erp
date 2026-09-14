@@ -40,7 +40,7 @@ class PagoTest extends TestCase
             ...$payload,
             'metodo_pago' => 'tarjeta',
             'titular' => 'Ana Lopez',
-            'numero' => '4242424242424242',
+            'numero' => '4242 4242 4242 4242',
             'vencimiento' => '12/29',
             'cvv' => '123',
         ])->assertRedirect($payload['return_url']);

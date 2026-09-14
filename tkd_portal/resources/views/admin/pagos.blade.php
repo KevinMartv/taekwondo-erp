@@ -1,273 +1,189 @@
+@php use Illuminate\Support\Carbon; @endphp
+
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            {{ __('Control de Pagos - Panel Administrativo') }}
-        </h2>
+        <h2 class="font-semibold text-xl text-gray-800 leading-tight">Control de pagos</h2>
     </x-slot>
 
-    <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                
-                <!-- PANEL IZQUIERDO: FORMULARIO DE REGISTRO DE PAGO -->
-                <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-                    <h2 class="text-xl font-semibold mb-4 text-blue-800 border-b pb-2">Registrar Nuevo Pago</h2>
-                    
-                    <div id="form_errors" class="hidden mb-4 p-4 bg-red-50 border-l-4 border-red-500 text-red-700 text-sm">
-                        <p class="font-bold mb-1">Error al guardar el pago:</p>
-                        <ul id="form_errors_list" class="list-disc list-inside"></ul>
-                    </div>
-                    
-                    <div id="form_success" class="hidden mb-4 p-4 bg-green-50 border-l-4 border-green-500 text-green-700 text-sm font-semibold">
-                        Pago registrado exitosamente.
-                    </div>
+    <div class="py-8">
+        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
 
-                    <form id="form_pago" class="space-y-4">
-                        <div class="grid grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">ID del Alumno *</label>
-                                <input type="number" id="alumno_id" required class="w-full border border-gray-300 rounded-md p-2 focus:ring-blue-500 focus:border-blue-500">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Monto ($) *</label>
-                                <input type="number" step="0.01" id="monto" required class="w-full border border-gray-300 rounded-md p-2 focus:ring-blue-500 focus:border-blue-500">
-                            </div>
-                        </div>
+            <x-flash :avisos="$avisos" />
 
-                        <div class="grid grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Método de Pago *</label>
-                                <select id="metodo_pago" required class="w-full border border-gray-300 rounded-md p-2 bg-white focus:ring-blue-500 focus:border-blue-500">
-                                    <option value="efectivo">Efectivo</option>
-                                    <option value="transferencia">Transferencia</option>
-                                </select>
-                            </div>
-                            <div id="rastreo_container" class="hidden">
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Número de Rastreo *</label>
-                                <input type="text" id="numero_rastreo" class="w-full border border-gray-300 rounded-md p-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Ej. ABC123">
-                            </div>
-                        </div>
+            <div class="grid lg:grid-cols-2 gap-6">
 
-                        <div class="grid grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Ciclo de Pago *</label>
-                                <select id="ciclo_pago" required class="w-full border border-gray-300 rounded-md p-2 bg-white focus:ring-blue-500 focus:border-blue-500">
-                                    <option value="mes">Mensual</option>
-                                    <option value="quincena">Quincenal</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Periodo Cubierto *</label>
-                                <input type="date" id="periodo_cubierto" required class="w-full border border-gray-300 rounded-md p-2 focus:ring-blue-500 focus:border-blue-500">
-                            </div>
+                <!-- Registrar mensualidad -->
+                <div class="p-6 bg-white rounded-2xl border border-gray-200">
+                    <h3 class="font-semibold text-gray-800">Registrar mensualidad</h3>
+                    <p class="mt-1 text-sm text-gray-500">
+                        El cobro se guarda en el módulo de pagos y actualiza el indicador del alumno.
+                    </p>
+
+                    <form method="POST" action="{{ route('admin.pagos.store') }}" class="mt-5 grid gap-4 sm:grid-cols-2"
+                          x-data="{ metodo: '{{ old('metodo_pago', 'efectivo') }}' }">
+                        @csrf
+
+                        <div>
+                            <x-input-label for="alumno_id" value="Alumno" />
+                            <select id="alumno_id" name="alumno_id" required
+                                    class="block mt-1 w-full border-gray-300 focus:border-red-500 focus:ring-red-500 rounded-md shadow-sm">
+                                @foreach ($alumnado as $alumno)
+                                    <option value="{{ $alumno['id'] }}" @selected(old('alumno_id', $consultaId) == $alumno['id'])>
+                                        #{{ $alumno['id'] }} · {{ $alumno['nombre'] }} {{ $alumno['apellido_paterno'] }}
+                                    </option>
+                                @endforeach
+                            </select>
                         </div>
 
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Fecha de Pago *</label>
-                            <input type="date" id="fecha_pago" required class="w-full border border-gray-300 rounded-md p-2 focus:ring-blue-500 focus:border-blue-500">
+                            <x-input-label for="monto" value="Monto" />
+                            <x-text-input id="monto" class="block mt-1 w-full" type="number" step="0.01" name="monto"
+                                          :value="old('monto', number_format($mensualidad, 2, '.', ''))" required />
                         </div>
 
-                        <!-- Asegúrate de pegar este botón aquí -->
-                        <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-md transition duration-200 mt-4">
-                            Registrar Pago
-                        </button>
+                        <div>
+                            <x-input-label for="metodo_pago" value="Método" />
+                            <select id="metodo_pago" name="metodo_pago" x-model="metodo" required
+                                    class="block mt-1 w-full border-gray-300 focus:border-red-500 focus:ring-red-500 rounded-md shadow-sm">
+                                <option value="efectivo">Efectivo</option>
+                                <option value="transferencia">Transferencia</option>
+                            </select>
+                        </div>
+
+                        <div x-show="metodo === 'transferencia'" x-cloak>
+                            <x-input-label for="numero_rastreo" value="Número de rastreo" />
+                            <x-text-input id="numero_rastreo" class="block mt-1 w-full" type="text" name="numero_rastreo"
+                                          :value="old('numero_rastreo')" />
+                        </div>
+
+                        <div>
+                            <x-input-label for="ciclo_pago" value="Ciclo" />
+                            <select id="ciclo_pago" name="ciclo_pago" required
+                                    class="block mt-1 w-full border-gray-300 focus:border-red-500 focus:ring-red-500 rounded-md shadow-sm">
+                                <option value="mes" @selected(old('ciclo_pago', 'mes') === 'mes')>Mensual</option>
+                                <option value="quincena" @selected(old('ciclo_pago') === 'quincena')>Quincenal</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <x-input-label for="periodo_cubierto" value="Periodo cubierto" />
+                            <x-text-input id="periodo_cubierto" class="block mt-1 w-full" type="date" name="periodo_cubierto"
+                                          :value="old('periodo_cubierto', Carbon::today()->startOfMonth()->toDateString())" required />
+                        </div>
+
+                        <div class="sm:col-span-2">
+                            <x-input-label for="fecha_pago" value="Fecha de pago" />
+                            <x-text-input id="fecha_pago" class="block mt-1 w-full" type="date" name="fecha_pago"
+                                          :value="old('fecha_pago', Carbon::today()->toDateString())" required />
+                        </div>
+
+                        <div class="sm:col-span-2">
+                            <x-primary-button>Registrar pago</x-primary-button>
+                        </div>
                     </form>
                 </div>
 
-                <!-- PANEL DERECHO: CONSULTA DE ESTADO DE CUENTA -->
-                <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-                    <h2 class="text-xl font-semibold mb-4 text-gray-800 border-b pb-2">Consultar Estado de Cuenta</h2>
-                    
-                    <form id="form_consulta" class="flex gap-2 mb-6">
-                        <input type="number" id="consulta_alumno_id" placeholder="ID del Alumno" required class="flex-1 border border-gray-300 rounded-md p-2 focus:ring-blue-500 focus:border-blue-500">
-                        <button type="submit" class="bg-gray-800 hover:bg-gray-900 text-white font-semibold py-2 px-4 rounded-md transition duration-200">
-                            Buscar
-                        </button>
+                <!-- Consultar estado de cuenta -->
+                <div class="p-6 bg-white rounded-2xl border border-gray-200">
+                    <h3 class="font-semibold text-gray-800">Estado de cuenta</h3>
+
+                    <form method="GET" action="{{ route('admin.pagos') }}" class="mt-4 flex gap-2 items-end">
+                        <div class="flex-1">
+                            <x-input-label for="consulta" value="Alumno" />
+                            <select id="consulta" name="alumno_id"
+                                    class="block mt-1 w-full border-gray-300 focus:border-red-500 focus:ring-red-500 rounded-md shadow-sm">
+                                <option value="">Selecciona…</option>
+                                @foreach ($alumnado as $alumno)
+                                    <option value="{{ $alumno['id'] }}" @selected($consultaId === (int) $alumno['id'])>
+                                        #{{ $alumno['id'] }} · {{ $alumno['nombre'] }} {{ $alumno['apellido_paterno'] }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <x-primary-button>Consultar</x-primary-button>
                     </form>
 
-                    <div id="consulta_error" class="hidden mb-4 p-3 bg-red-50 text-red-700 text-sm rounded-md border border-red-200"></div>
+                    @if ($consulta)
+                        @php $estadoPago = $consulta['estado_cuenta'] ?? 'desconocido'; @endphp
 
-                    <div id="estado_cuenta_result" class="hidden">
-                        <div class="grid grid-cols-2 gap-4 mb-6">
-                            <div class="p-4 rounded-md border text-center" id="status_card">
-                                <p class="text-sm text-gray-500 mb-1">Estatus Actual</p>
-                                <p class="text-2xl font-bold uppercase tracking-wide" id="lbl_estado"></p>
+                        <div class="mt-6 grid sm:grid-cols-2 gap-4">
+                            <div class="p-4 rounded-xl text-center
+                                {{ $estadoPago === 'al_dia' ? 'bg-green-50 text-green-800' : ($estadoPago === 'con_adeudo' ? 'bg-red-50 text-red-800' : 'bg-gray-50 text-gray-700') }}">
+                                <p class="text-xs uppercase tracking-wider">Indicador de pago</p>
+                                <p class="mt-1 text-xl font-bold">
+                                    {{ $estadoPago === 'al_dia' ? 'Pagado' : ($estadoPago === 'con_adeudo' ? 'No ha pagado' : 'Sin pagos') }}
+                                </p>
                             </div>
-                            <div class="p-4 rounded-md border bg-gray-50 flex flex-col justify-center">
-                                <p class="text-sm text-gray-600"><strong>Último periodo:</strong> <span id="lbl_ultimo"></span></p>
-                                <p class="text-sm text-gray-600 mt-1"><strong>Próximo vto:</strong> <span id="lbl_vencimiento"></span></p>
+                            <div class="p-4 rounded-xl bg-gray-50 text-sm text-gray-600">
+                                <p><strong>Último periodo:</strong> {{ $consulta['ultimo_periodo_pagado'] ?? '—' }}</p>
+                                <p class="mt-1"><strong>Próximo vto:</strong> {{ $consulta['proximo_vencimiento'] ?? '—' }}</p>
+                                <p class="mt-1"><strong>Días restantes:</strong> {{ $consulta['dias_restantes'] ?? '—' }}</p>
                             </div>
                         </div>
 
-                        <h3 class="text-lg font-semibold mb-2 text-gray-700">Historial de Pagos</h3>
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-sm text-left border-collapse">
-                                <thead class="bg-gray-100 text-gray-600">
-                                    <tr>
-                                        <th class="p-2 border">Fecha</th>
-                                        <th class="p-2 border">Monto</th>
-                                        <th class="p-2 border">Método</th>
-                                        <th class="p-2 border">Ciclo</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="tabla_historial"></tbody>
-                            </table>
+                        @if (count($consulta['pagos_pendientes'] ?? []) > 0)
+                            <div class="mt-6">
+                                <h4 class="font-semibold text-gray-800 text-sm">Pendientes de confirmar</h4>
+                                <ul class="mt-2 space-y-2">
+                                    @foreach ($consulta['pagos_pendientes'] as $pendiente)
+                                        <li class="flex items-center justify-between gap-3 p-3 rounded-lg bg-amber-50 text-sm">
+                                            <span>
+                                                Periodo {{ Carbon::parse($pendiente['periodo_cubierto'])->format('d/m/Y') }} ·
+                                                ${{ number_format((float) $pendiente['monto'], 2) }} ·
+                                                {{ $pendiente['metodo_pago'] }}
+                                            </span>
+                                            <form method="POST" action="{{ route('admin.pagos.confirmar', $pendiente['id']) }}">
+                                                @csrf
+                                                @method('PATCH')
+                                                <button type="submit" class="px-3 py-1.5 rounded-lg bg-green-600 text-white text-xs font-semibold hover:bg-green-500">
+                                                    Confirmar cobro
+                                                </button>
+                                            </form>
+                                        </li>
+                                    @endforeach
+                                </ul>
+                            </div>
+                        @endif
+
+                        <div class="mt-6">
+                            <h4 class="font-semibold text-gray-800 text-sm">Historial</h4>
+                            <div class="mt-2 overflow-x-auto">
+                                <table class="w-full text-sm text-left">
+                                    <thead class="bg-gray-50 text-gray-600 text-xs uppercase">
+                                        <tr>
+                                            <th class="px-3 py-2">Periodo</th>
+                                            <th class="px-3 py-2">Monto</th>
+                                            <th class="px-3 py-2">Método</th>
+                                            <th class="px-3 py-2">Estado</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-gray-100">
+                                        @forelse ($consulta['historial'] ?? [] as $pago)
+                                            <tr>
+                                                <td class="px-3 py-2">{{ Carbon::parse($pago['periodo_cubierto'])->format('d/m/Y') }}</td>
+                                                <td class="px-3 py-2">${{ number_format((float) $pago['monto'], 2) }}</td>
+                                                <td class="px-3 py-2 capitalize">
+                                                    {{ $pago['metodo_pago'] }}
+                                                    @if (! empty($pago['numero_rastreo']))
+                                                        <span class="block text-xs text-gray-400">{{ $pago['numero_rastreo'] }}</span>
+                                                    @endif
+                                                </td>
+                                                <td class="px-3 py-2 capitalize">{{ $pago['estado'] }}</td>
+                                            </tr>
+                                        @empty
+                                            <tr>
+                                                <td colspan="4" class="px-3 py-6 text-center text-gray-500">Sin pagos registrados.</td>
+                                            </tr>
+                                        @endforelse
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
-                    </div>
+                    @else
+                        <p class="mt-6 text-sm text-gray-500">Elige un alumno para ver su historial y su vigencia.</p>
+                    @endif
                 </div>
-
             </div>
         </div>
     </div>
-
-    <script>
-        const API_URL = 'http://localhost:8002/api';
-
-        document.getElementById('fecha_pago').valueAsDate = new Date();
-
-        const metodoPagoSelect = document.getElementById('metodo_pago');
-        const rastreoContainer = document.getElementById('rastreo_container');
-        const rastreoInput = document.getElementById('numero_rastreo');
-
-        metodoPagoSelect.addEventListener('change', (e) => {
-            if (e.target.value === 'transferencia') {
-                rastreoContainer.classList.remove('hidden');
-                rastreoInput.required = true;
-            } else {
-                rastreoContainer.classList.add('hidden');
-                rastreoInput.required = false;
-                rastreoInput.value = '';
-            }
-        });
-
-        document.getElementById('form_pago').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            document.getElementById('form_errors').classList.add('hidden');
-            document.getElementById('form_success').classList.add('hidden');
-            const errorsList = document.getElementById('form_errors_list');
-            errorsList.innerHTML = '';
-
-            const payload = {
-                alumno_id: parseInt(document.getElementById('alumno_id').value),
-                monto: parseFloat(document.getElementById('monto').value),
-                metodo_pago: document.getElementById('metodo_pago').value,
-                ciclo_pago: document.getElementById('ciclo_pago').value,
-                periodo_cubierto: document.getElementById('periodo_cubierto').value,
-                fecha_pago: document.getElementById('fecha_pago').value
-            };
-
-            if (payload.metodo_pago === 'transferencia') {
-                payload.numero_rastreo = document.getElementById('numero_rastreo').value;
-            }
-
-            try {
-                const response = await fetch(`${API_URL}/pagos`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json'
-                    },
-                    body: JSON.stringify(payload)
-                });
-
-                const data = await response.json();
-
-                if (response.status === 422) {
-                    document.getElementById('form_errors').classList.remove('hidden');
-                    
-                    if (data.errors) {
-                        for (const campo in data.errors) {
-                            data.errors[campo].forEach(msg => {
-                                const li = document.createElement('li');
-                                li.textContent = msg;
-                                errorsList.appendChild(li);
-                            });
-                        }
-                    } else if (data.message) {
-                        const li = document.createElement('li');
-                        li.textContent = data.message;
-                        errorsList.appendChild(li);
-                    }
-                } else if (response.status === 201 || response.ok) {
-                    document.getElementById('form_success').classList.remove('hidden');
-                    document.getElementById('form_pago').reset();
-                    document.getElementById('fecha_pago').valueAsDate = new Date();
-                    metodoPagoSelect.dispatchEvent(new Event('change'));
-
-                    const consultaId = document.getElementById('consulta_alumno_id').value;
-                    if(consultaId && parseInt(consultaId) === payload.alumno_id) {
-                        document.getElementById('form_consulta').dispatchEvent(new Event('submit'));
-                    }
-                } else {
-                    throw new Error('Error inesperado del servidor');
-                }
-            } catch (error) {
-                document.getElementById('form_errors').classList.remove('hidden');
-                errorsList.innerHTML = `<li>Error de conexión: ${error.message}</li>`;
-            }
-        });
-
-        document.getElementById('form_consulta').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const alumnoId = document.getElementById('consulta_alumno_id').value;
-            const errorContainer = document.getElementById('consulta_error');
-            const resultContainer = document.getElementById('estado_cuenta_result');
-            
-            errorContainer.classList.add('hidden');
-            resultContainer.classList.add('hidden');
-
-            try {
-                const response = await fetch(`${API_URL}/alumnos/${alumnoId}/estado-cuenta`, {
-                    headers: { 'Accept': 'application/json' }
-                });
-                
-                const data = await response.json();
-
-                if (response.ok) {
-                    const statusCard = document.getElementById('status_card');
-                    const lblEstado = document.getElementById('lbl_estado');
-                    
-                    if (data.estado_cuenta === 'al_dia') {
-                        lblEstado.textContent = 'Al Día';
-                        statusCard.className = 'p-4 rounded-md border text-center bg-green-50 border-green-200 text-green-700';
-                    } else {
-                        lblEstado.textContent = 'Adeudo';
-                        statusCard.className = 'p-4 rounded-md border text-center bg-red-50 border-red-200 text-red-700';
-                    }
-
-                    document.getElementById('lbl_ultimo').textContent = data.ultimo_periodo_pagado || 'N/A';
-                    document.getElementById('lbl_vencimiento').textContent = data.proximo_vencimiento || 'N/A';
-
-                    const tbody = document.getElementById('tabla_historial');
-                    tbody.innerHTML = '';
-
-                    if (data.historial && data.historial.length > 0) {
-                        data.historial.forEach(pago => {
-                            const tr = document.createElement('tr');
-                            tr.className = "border-b hover:bg-gray-50";
-                            tr.innerHTML = `
-                                <td class="p-2 border">${pago.fecha_pago || pago.created_at || '-'}</td>
-                                <td class="p-2 border font-medium">$${pago.monto}</td>
-                                <td class="p-2 border capitalize">${pago.metodo_pago} ${pago.numero_rastreo ? `<br><span class="text-xs text-gray-500">Ref: ${pago.numero_rastreo}</span>` : ''}</td>
-                                <td class="p-2 border capitalize">${pago.ciclo_pago}</td>
-                            `;
-                            tbody.appendChild(tr);
-                        });
-                    } else {
-                        tbody.innerHTML = '<tr><td colspan="4" class="p-4 text-center text-gray-500">No hay pagos registrados</td></tr>';
-                    }
-
-                    resultContainer.classList.remove('hidden');
-                } else {
-                    errorContainer.textContent = data.message || 'No se pudo cargar el estado de cuenta. Verifica que el ID exista.';
-                    errorContainer.classList.remove('hidden');
-                }
-            } catch (error) {
-                errorContainer.textContent = 'Error de red: No se pudo conectar con el servidor.';
-                errorContainer.classList.remove('hidden');
-            }
-        });
-    </script>
 </x-app-layout>

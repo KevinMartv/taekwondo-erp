@@ -11,6 +11,12 @@ return new class extends Migration
      */
     public function up(): void
 {
+    // La tabla alumnos la crea el módulo tkd_alumnos. Si este módulo se migra
+    // por su cuenta (por ejemplo en las pruebas) simplemente no hay llave.
+    if (! Schema::hasTable('alumnos')) {
+        return;
+    }
+
     Schema::table('pagos', function (Blueprint $table) {
         $table->foreign('alumno_id')->references('id')->on('alumnos')->onDelete('restrict');
     });
@@ -18,6 +24,10 @@ return new class extends Migration
 
 public function down(): void
 {
+    if (! Schema::hasTable('alumnos')) {
+        return;
+    }
+
     Schema::table('pagos', function (Blueprint $table) {
         $table->dropForeign(['alumno_id']);
     });

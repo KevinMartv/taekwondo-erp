@@ -35,4 +35,34 @@ return [
         ],
     ],
 
+    /*
+    | Módulos del ERP. "url" es la dirección pública (la que abre el navegador)
+    | y "api" la que usa el portal para hablar server-to-server: dentro de
+    | Docker son distintas (http://tkd_alumnos:8000 vs http://localhost:8001).
+    */
+    'modules' => [
+        'alumnos' => [
+            'url' => env('ALUMNOS_URL', 'http://localhost:8001'),
+            'api' => env('ALUMNOS_INTERNAL_URL', env('ALUMNOS_URL', 'http://localhost:8001')),
+        ],
+        'pagos' => [
+            'url' => env('PAGOS_URL', 'http://localhost:8002'),
+            'api' => env('PAGOS_INTERNAL_URL', env('PAGOS_URL', 'http://localhost:8002')),
+        ],
+        'pos' => [
+            'url' => env('POS_URL', 'http://localhost:8003'),
+            'api' => env('POS_INTERNAL_URL', env('POS_URL', 'http://localhost:8003')),
+        ],
+    ],
+
+    // Secreto compartido con tkd_pagos y tkd_pos para firmar las intenciones
+    // que el portal envía por redirección (renovación de suscripción, tienda).
+    'portal' => [
+        'secret' => env('PORTAL_SECRET', 'tkd-dev-portal-secret'),
+    ],
+
+    'suscripcion' => [
+        'monto' => (float) env('SUSCRIPCION_MONTO', 500),
+    ],
+
 ];

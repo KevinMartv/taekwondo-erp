@@ -35,4 +35,23 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+
+    public function esAdmin(): bool
+    {
+        return $this->role === 'admin';
+    }
+
+    public function esAlumno(): bool
+    {
+        return $this->role === 'alumno';
+    }
+
+    /**
+     * Los alumnos siempre operan sobre su propio expediente: nunca tomamos el
+     * id que venga en la petición, sino el que quedó vinculado en la cuenta.
+     */
+    public function expedienteId(): ?int
+    {
+        return $this->alumno_id ? (int) $this->alumno_id : null;
+    }
 }

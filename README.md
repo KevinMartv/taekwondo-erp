@@ -1,14 +1,165 @@
 # Escuela de Taekwondo ERP
 
-Monorepo de tres aplicaciones Laravel independientes que comparten una base MySQL (`escuela_taekwondo`) vía Docker Compose:
+Monorepo de cuatro aplicaciones Laravel independientes que comparten una base MySQL (`escuela_taekwondo`) vía Docker Compose:
 
 | Módulo | Carpeta | Puerto local (Docker Compose) | Rol |
 | --- | --- | --- | --- |
+| Portal | `tkd_portal` | `http://localhost:8000` | Login, panel admin y cuenta del alumno |
 | Alumnos | `tkd_alumnos` | `http://localhost:8001` | Expediente de alumnos |
 | Pagos | `tkd_pagos` | `http://localhost:8002` | Colegiaturas (API) **y** checkout de la tienda (`/pagar`) |
 | POS / tienda | `tkd_pos` | `http://localhost:8003` | Catálogo, carrito, ventas e inventario |
 
-Este documento describe el estado actual de **catálogo + compra en línea** y el **contrato de integración POS ↔ Pagos**. Está pensado para que otro agente de IA (o un desarrollador) pueda extender el sistema sin romper el handshake.
+Este documento sirve para **correr el sistema en equipo** y para que otro agente de IA no rompa el handshake entre módulos.
+
+---
+
+## Cómo correr el sistema (compañeros)
+
+Necesitas **Docker Desktop** (Compose v2). No hace falta PHP ni MySQL en el host: todo corre en contenedores.
+
+### 1. Clonar y entrar al repo
+
+```bash
+git clone https://github.com/KevinMartv/taekwondo-erp.git
+cd taekwondo-erp
+git checkout main
+```
+
+### 2. Configuración en la raíz (Compose)
+
+Crea el `.env` que usa `docker-compose.yml` (contraseña de MySQL y secretos compartidos):
+
+```bash
+cp .env.example .env
+```
+
+Valores de desarrollo (puedes dejarlos igual):
+
+| Variable | Para qué |
+| --- | --- |
+| `DB_ROOT_PASSWORD` | Root de MySQL; **la misma** en los cuatro módulos |
+| `PAGO_SECRET` | Firma del cobro POS → Pagos |
+| `PORTAL_SECRET` | Firma del portal → Pagos (suscripción) y POS (tienda) |
+| `SUSCRIPCION_MONTO` | Mensualidad simulada (por defecto 500) |
+
+### 3. Configuración de cada módulo (`APP_KEY`)
+
+Cada app Laravel necesita su propio `.env` (sobre todo `APP_KEY`). Copia los ejemplos:
+
+```bash
+cp tkd_portal/.env.example tkd_portal/.env
+cp tkd_alumnos/.env.example tkd_alumnos/.env
+cp tkd_pagos/.env.example tkd_pagos/.env
+cp tkd_pos/.env.example tkd_pos/.env
+```
+
+Docker Compose **sobrescribe** host de BD, puertos y secretos. Con eso basta para el entorno Docker.
+
+### 4. Contenedores a levantar
+
+Hay **cinco** servicios; hay que levantarlos **todos**:
+
+| Contenedor | Puerto en tu PC | Qué es |
+| --- | --- | --- |
+| `tkd_db` | 3306 | MySQL 8 (`escuela_taekwondo`) |
+| `tkd_portal` | **8000** | Bienvenida, login, paneles |
+| `tkd_alumnos` | 8001 | API de expedientes, horarios, asistencia |
+| `tkd_pagos` | 8002 | Mensualidades y pasarela simulada |
+| `tkd_pos` | 8003 | Catálogo / carrito / ventas |
+
+```bash
+docker compose up -d
+```
+
+La primera vez descarga las imágenes (`mysql:8.0` y `bitnami/laravel`). Espera a que `tkd_db` quede healthy (`docker compose ps`).
+
+### 5. Dependencias, clave y base de datos
+
+Dentro de cada contenedor de app:
+
+```bash
+# Dependencias PHP (si vendor/ no está en el volumen)
+docker compose exec tkd_portal composer install --no-interaction
+docker compose exec tkd_alumnos composer install --no-interaction
+docker compose exec tkd_pagos composer install --no-interaction
+docker compose exec tkd_pos composer install --no-interaction
+
+# APP_KEY (una vez por módulo)
+docker compose exec tkd_portal php artisan key:generate --force
+docker compose exec tkd_alumnos php artisan key:generate --force
+docker compose exec tkd_pagos php artisan key:generate --force
+docker compose exec tkd_pos php artisan key:generate --force
+
+# Migraciones: alumnos ANTES que pagos (hay llave foránea)
+docker compose exec tkd_portal php artisan migrate --force
+docker compose exec tkd_alumnos php artisan migrate --force
+docker compose exec tkd_pagos php artisan migrate --force
+docker compose exec tkd_pos php artisan migrate --force
+
+# Catálogos y cuenta admin
+docker compose exec tkd_portal php artisan db:seed --force
+docker compose exec tkd_alumnos php artisan db:seed --force
+docker compose exec tkd_pos php artisan db:seed --force
+```
+
+### 6. Entrar al sistema
+
+| URL | Uso |
+| --- | --- |
+| http://localhost:8000 | **Portal** (punto de entrada del equipo) |
+| http://localhost:8001/alumnos | UI de alumnos (también la consume el portal) |
+| http://localhost:8002 | Módulo de pagos |
+| http://localhost:8003 | Tienda POS |
+
+Cuenta de administrador (seeder del portal):
+
+- Correo: `admin@dojang.test`
+- Contraseña: `Admin123!`
+
+Un alumno se registra desde **Crear cuenta** en el portal. Tarjeta simulada: `4242 4242 4242 4242`, vencimiento `MM/AA`, CVV 3 dígitos.
+
+### 7. Parar / resetear
+
+```bash
+docker compose down          # apaga contenedores
+docker compose down -v       # además borra el volumen de MySQL (base limpia)
+```
+
+Si un módulo no arranca: `docker compose logs -f tkd_portal` (cambia el nombre del servicio). Cookies distintas (`SESSION_COOKIE`) evitan que los cuatro `localhost` se pisen la sesión.
+
+---
+
+### `tkd_portal` — bienvenida, niveles de acceso e integración
+
+Punto de entrada público en `http://localhost:8000`. El visitante ve un portal de bienvenida con **Iniciar sesión** y **Crear cuenta**. El registro siempre nace con rol `alumno` y crea el expediente en `tkd_alumnos`. El administrador se siembra (`admin@dojang.test` / `Admin123!`).
+
+Tras el login, `GET /dashboard` redirige según el nivel:
+
+| Nivel | Aterrizaje | Privilegio |
+| --- | --- | --- |
+| Visitante | `/` | Sólo bienvenida, login y registro |
+| Alumno | `/mi-cuenta` | Edita **su** expediente, horarios, fechas de asistencia, renovación mensual y tienda |
+| Administrador | `/admin/alumnos` | Ve, edita, suspende, activa y borra cualquier alumno; cobra y confirma mensualidades; ve inventario POS |
+
+**Alumno** (el id de expediente sale de la sesión, nunca de la URL):
+
+- Perfil: `PUT` a `tkd_alumnos` sin `nivel_id` ni `activo`.
+- Horarios y asistencias: catálogo y reservas en `tkd_alumnos`.
+- Contador de vencimiento: `GET /api/alumnos/{id}/estado-cuenta` en `tkd_pagos` (ciclo mensual).
+- Renovar: redirect firmado a `tkd_pagos/suscripcion` (pasarela simulada).
+- Tienda: redirect firmado a `tkd_pos/?alumno_id&alumno&token`; el checkout cierra en `/pagar`.
+
+**Administrador:**
+
+- Listado cruzado con indicador **Pagado / No ha pagado / Sin pagos**.
+- Editar grado, horarios y datos.
+- Suspender o activar (`PATCH /api/alumnos/{id}/estado`).
+- Borrar sólo si no hay historial de cobros; si hay pagos, debe suspender.
+- Registrar o confirmar mensualidades en `tkd_pagos`.
+
+Gates: `is-admin` e `is-alumno` en `AppServiceProvider`. Middleware `expediente` obliga a completar el padrón si el módulo estaba caído al registrarse.
+
+Variables: `ALUMNOS_URL`, `PAGOS_URL`, `POS_URL`, `*_INTERNAL_URL`, `PORTAL_SECRET`.
 
 ---
 
@@ -249,26 +400,16 @@ Separado (no mezclar con el catálogo):
 
 ## Cómo levantar el entorno
 
-```bash
-docker compose up -d --build
-docker compose exec tkd_pos php artisan migrate --force
-docker compose exec tkd_pos php artisan db:seed --force
-```
-
-Requisitos: copiar `tkd_pos/.env.example` → `tkd_pos/.env` y `tkd_pagos/.env.example` → `tkd_pagos/.env`, generar `APP_KEY` en ambos.
-
-Tarjeta de desarrollo (no se persiste): número `4242424242424242`, vencimiento `MM/AA`, CVV 3-4 dígitos.
+Sigue la sección **Cómo correr el sistema** al inicio de este README (`.env` raíz, `.env` de cada módulo, `docker compose up -d`, migrate/seed).
 
 ### Tests
 
 ```bash
-# dentro de cada app, o vía imagen composer:2
-php artisan test
+docker compose exec tkd_portal php artisan test
+docker compose exec tkd_alumnos php artisan test
+docker compose exec tkd_pagos php artisan test
+docker compose exec tkd_pos php artisan test
 ```
-
-- POS: catálogo, carrito, redirect a `/pagar`, confirmación API.
-- Pagos: token válido, token inválido, HTTP fake al POS y redirect a `return_url`.
-
 ---
 
 ## Reglas para agentes de IA que toquen este flujo
