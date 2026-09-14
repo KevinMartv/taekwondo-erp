@@ -17,8 +17,14 @@ services:
       - "8002:8000"
     volumes:
       - ./tkd_pagos:/app
+    environment:
+      APP_URL: http://localhost:8002
+      POS_URL: http://tkd_pos:8000
+      POS_PUBLIC_URL: http://localhost:8003
+      PAGO_SECRET: ${PAGO_SECRET:-tkd-dev-pago-secret}
     depends_on:
       - tkd_db
+      - tkd_pos
 
   tkd_alumnos:
     image: bitnami/laravel:latest
@@ -39,6 +45,10 @@ services:
       - "8003:8000"
     volumes:
       - ./tkd_pos:/app
+    environment:
+      PAGOS_URL: http://localhost:8002
+      PAGO_SECRET: ${PAGO_SECRET:-tkd-dev-pago-secret}
+      APP_URL: http://localhost:8003
     depends_on:
       - tkd_db
   tkd_portal:

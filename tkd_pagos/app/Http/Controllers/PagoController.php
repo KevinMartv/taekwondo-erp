@@ -20,39 +20,37 @@ class PagoController extends Controller
             'fecha_pago' => 'required|date',
             ]);
 
-        
-        $validated['estado'] = 'pagado'; 
+        $validated['estado'] = 'pagado';
 
         $pago = Pago::create($validated);
 
         return response()->json([
             'mensaje' => 'Pago registrado correctamente',
-            'data' => $pago
+            'data' => $pago,
         ], 201);
     }
+
     public function estadoCuenta($alumno_id)
     {
         $pagos = Pago::where('alumno_id', $alumno_id)
-                     ->orderBy('periodo_cubierto', 'desc')
-                     ->get();
+            ->orderBy('periodo_cubierto', 'desc')
+            ->get();
 
         if ($pagos->isEmpty()) {
             return response()->json([
                 'alumno_id' => $alumno_id,
                 'estado_cuenta' => 'sin_historial',
-                'historial' => []
+                'historial' => [],
             ]);
         }
 
         $ultimoPago = $pagos->first();
         $periodo = \Carbon\Carbon::parse($ultimoPago->periodo_cubierto);
 
-        // Calcular cuándo le toca pagar de nuevo basado en su ciclo
         $proximoVencimiento = $ultimoPago->ciclo_pago === 'mes'
             ? $periodo->addMonth()
             : $periodo->addDays(15);
 
-        // Si hoy es mayor a su fecha de vencimiento, debe
         $estado = now()->greaterThan($proximoVencimiento) ? 'con_adeudo' : 'al_dia';
 
         return response()->json([
@@ -60,7 +58,7 @@ class PagoController extends Controller
             'estado_cuenta' => $estado,
             'ultimo_periodo_pagado' => $ultimoPago->periodo_cubierto,
             'proximo_vencimiento' => $proximoVencimiento->toDateString(),
-            'historial' => $pagos
+            'historial' => $pagos,
         ]);
     }
 }
