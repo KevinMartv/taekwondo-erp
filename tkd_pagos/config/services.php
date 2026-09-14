@@ -35,4 +35,10 @@ return [
         ],
     ],
 
+    'pos' => [
+        'url' => env('POS_URL', 'http://localhost:8003'),
+        'public_url' => env('POS_PUBLIC_URL', env('POS_URL', 'http://localhost:8003')),
+        'secret' => env('PAGO_SECRET', 'tkd-dev-pago-secret'),
+    ],
+
 ];

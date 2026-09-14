@@ -4,14 +4,13 @@ namespace App\Http\Controllers;
 
 use App\Models\Producto;
 use App\Models\Venta;
+use App\Services\RegistrarVenta;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\ValidationException;
 
 class VentaController extends Controller
 {
-    public function store(Request $request): JsonResponse
+    public function store(Request $request, RegistrarVenta $registrarVenta): JsonResponse
     {
         $validated = $request->validate([
             'alumno_id' => ['nullable', 'integer'],
@@ -22,52 +21,34 @@ class VentaController extends Controller
             'items.*.cantidad' => ['required', 'integer', 'min:1'],
         ]);
 
-        $venta = DB::transaction(function () use ($validated) {
-            $venta = Venta::query()->create([
-                'alumno_id' => $validated['alumno_id'] ?? null,
-                'fecha' => $validated['fecha'] ?? now(),
-                'total' => 0,
-                'metodo_pago' => $validated['metodo_pago'],
-            ]);
+        $metodo = $validated['metodo_pago'];
+        $validated['estado'] = $metodo === 'pendiente' ? 'pendiente_pago' : 'pagada';
 
-            $total = 0;
-
-            foreach ($validated['items'] as $item) {
-                $producto = Producto::query()
-                    ->whereKey($item['producto_id'])
-                    ->lockForUpdate()
-                    ->firstOrFail();
-
-                if (! $producto->activo) {
-                    throw ValidationException::withMessages([
-                        'items' => "El producto {$producto->nombre} no está activo.",
-                    ]);
-                }
-
-                if ($producto->stock < $item['cantidad']) {
-                    throw ValidationException::withMessages([
-                        'items' => "Stock insuficiente para {$producto->nombre}.",
-                    ]);
-                }
-
-                $precioUnitario = $producto->precio;
-                $cantidad = $item['cantidad'];
-                $total += $precioUnitario * $cantidad;
-
-                $venta->detalles()->create([
-                    'producto_id' => $producto->id,
-                    'cantidad' => $cantidad,
-                    'precio_unitario' => $precioUnitario,
-                ]);
-
-                $producto->decrement('stock', $cantidad);
-            }
-
-            $venta->update(['total' => $total]);
-
-            return $venta->load('detalles');
-        });
+        $venta = $registrarVenta->handle($validated);
 
         return response()->json($venta, 201);
+    }
+
+    public function confirmarPago(Request $request, Venta $venta): JsonResponse
+    {
+        $validated = $request->validate([
+            'metodo_pago' => ['required', 'string', 'max:50'],
+            'token' => ['required', 'string'],
+        ]);
+
+        $esperado = $venta->tokenPago();
+
+        if (! hash_equals($esperado, $validated['token'])) {
+            abort(403, 'Token de pago inválido.');
+        }
+
+        if (! $venta->estaPagada()) {
+            $venta->update([
+                'metodo_pago' => $validated['metodo_pago'],
+                'estado' => 'pagada',
+            ]);
+        }
+
+        return response()->json($venta->fresh('detalles'));
     }
 }
