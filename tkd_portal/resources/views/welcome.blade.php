@@ -9,7 +9,7 @@
     @include('layouts.assets')
 </head>
 <body class="font-sans antialiased bg-gray-900 text-gray-100">
-
+ 
     <header class="border-b border-white/10">
         <div class="max-w-6xl mx-auto px-6 py-5 flex items-center justify-between">
             <div class="flex items-center gap-3">
@@ -19,7 +19,7 @@
                     <p class="text-xs text-gray-400">Escuela de Taekwondo</p>
                 </div>
             </div>
-
+ 
             <nav class="flex items-center gap-3">
                 @auth
                     <a href="{{ route('dashboard') }}" class="px-5 py-2 rounded-lg bg-red-600 hover:bg-red-500 text-sm font-semibold">
@@ -36,7 +36,7 @@
             </nav>
         </div>
     </header>
-
+ 
     <main>
         <section class="max-w-6xl mx-auto px-6 py-20 grid lg:grid-cols-2 gap-12 items-center">
             <div>
@@ -46,12 +46,6 @@
                 <h1 class="mt-5 text-4xl sm:text-5xl font-bold leading-tight">
                     Tu dojang, tus clases y tus pagos <span class="text-red-500">en un solo lugar</span>
                 </h1>
-                <p class="mt-5 text-lg text-gray-400">
-                    Los alumnos administran su expediente, eligen sus horarios, reservan sus clases,
-                    renuevan su mensualidad y compran equipo. El administrador controla todo el alumnado
-                    y el estado de cada suscripción.
-                </p>
-
                 <div class="mt-8 flex flex-wrap gap-3">
                     <a href="{{ route('register') }}" class="px-6 py-3 rounded-lg bg-red-600 hover:bg-red-500 font-semibold">
                         Registrarme como alumno
@@ -60,13 +54,8 @@
                         Ya tengo cuenta
                     </a>
                 </div>
-
-                <p class="mt-6 text-sm text-gray-500">
-                    Al crear tu cuenta se genera tu expediente en el módulo de alumnos y queda lista tu
-                    ficha de pagos.
-                </p>
             </div>
-
+ 
             <div class="grid sm:grid-cols-2 gap-4">
                 <div class="p-5 rounded-2xl bg-white/5 border border-white/10">
                     <p class="text-2xl">🥋</p>
@@ -90,7 +79,7 @@
                 </div>
             </div>
         </section>
-
+ 
         <section class="border-t border-white/10 bg-black/20">
             <div class="max-w-6xl mx-auto px-6 py-14 grid md:grid-cols-2 gap-8">
                 <div class="p-6 rounded-2xl border border-white/10">
@@ -116,7 +105,7 @@
             </div>
         </section>
     </main>
-
+ 
     <footer class="border-t border-white/10">
         <div class="max-w-6xl mx-auto px-6 py-8 text-sm text-gray-500 flex flex-wrap justify-between gap-3">
             <p>Dojang ERP · Portal central del sistema</p>
