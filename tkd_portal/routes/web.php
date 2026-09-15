@@ -40,7 +40,7 @@ Route::middleware(['auth'])->group(function () {
         })->name('alumno.mi_cuenta');
         
         Route::get('/tienda', function () {
-            return redirect('http://localhost:8003/tienda'); 
+            return redirect('http://localhost:8003'); 
         })->name('alumno.tienda');
     });
 
