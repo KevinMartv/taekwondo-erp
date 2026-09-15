@@ -80,30 +80,6 @@
             </div>
         </section>
  
-        <section class="border-t border-white/10 bg-black/20">
-            <div class="max-w-6xl mx-auto px-6 py-14 grid md:grid-cols-2 gap-8">
-                <div class="p-6 rounded-2xl border border-white/10">
-                    <h2 class="text-lg font-semibold">Nivel alumno</h2>
-                    <ul class="mt-4 space-y-2 text-sm text-gray-400">
-                        <li>· Edita únicamente sus propios datos</li>
-                        <li>· Selecciona horarios y fechas de asistencia</li>
-                        <li>· Renueva su suscripción desde su cuenta</li>
-                        <li>· Compra en la tienda y paga en línea</li>
-                        <li>· Ve el contador de vencimiento de su mensualidad</li>
-                    </ul>
-                </div>
-                <div class="p-6 rounded-2xl border border-white/10">
-                    <h2 class="text-lg font-semibold">Nivel administrador</h2>
-                    <ul class="mt-4 space-y-2 text-sm text-gray-400">
-                        <li>· Ve el expediente completo de cada alumno</li>
-                        <li>· Edita, suspende, activa y borra alumnos</li>
-                        <li>· Indicador de pago: quién está al día y quién no</li>
-                        <li>· Registra y confirma mensualidades</li>
-                        <li>· Consulta el inventario del punto de venta</li>
-                    </ul>
-                </div>
-            </div>
-        </section>
     </main>
  
     <footer class="border-t border-white/10">
@@ -114,3 +90,4 @@
     </footer>
 </body>
 </html>
+ 
