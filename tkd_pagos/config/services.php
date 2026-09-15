@@ -41,4 +41,15 @@ return [
         'secret' => env('PAGO_SECRET', 'tkd-dev-pago-secret'),
     ],
 
+    'portal' => [
+        'url' => env('PORTAL_URL', 'http://localhost:8000'),
+        'public_url' => env('PORTAL_PUBLIC_URL', env('PORTAL_URL', 'http://localhost:8000')),
+        'secret' => env('PORTAL_SECRET', 'tkd-dev-portal-secret'),
+    ],
+
+    'suscripcion' => [
+        'monto' => (float) env('SUSCRIPCION_MONTO', 500),
+        'ciclo' => env('SUSCRIPCION_CICLO', 'mes'),
+    ],
+
 ];

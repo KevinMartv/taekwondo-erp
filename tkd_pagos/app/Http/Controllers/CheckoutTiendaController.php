@@ -19,6 +19,10 @@ class CheckoutTiendaController extends Controller
 
     public function store(Request $request, ConfirmarPagoPos $confirmarPagoPos): RedirectResponse
     {
+        $request->merge([
+            'numero' => preg_replace('/\D+/', '', (string) $request->input('numero')),
+        ]);
+
         $validated = $request->validate([
             'venta_id' => ['required', 'integer'],
             'referencia' => ['required', 'string', 'max:50'],

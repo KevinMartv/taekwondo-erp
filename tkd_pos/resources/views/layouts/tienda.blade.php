@@ -38,6 +38,12 @@
                 <span class="ml-cart__label">Carrito</span>
             </a>
         </div>
+        @if (session('tkd_alumno'))
+            <div class="ml-identity">
+                <span>Comprando como <strong>{{ session('tkd_alumno.nombre') }}</strong> · alumno #{{ session('tkd_alumno.id') }}</span>
+                <a href="{{ rtrim((string) config('services.portal.url'), '/') }}/mi-cuenta">Volver al portal</a>
+            </div>
+        @endif
         <nav class="ml-nav">
             <div class="ml-nav__inner">
                 <a href="{{ route('catalogo.index') }}">Todos</a>

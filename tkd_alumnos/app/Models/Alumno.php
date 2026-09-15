@@ -29,4 +29,14 @@ class Alumno extends Model
     {
         return $this->belongsToMany(Horario::class, 'alumno_horario');
     }
+
+    public function asistencias()
+    {
+        return $this->hasMany(Asistencia::class);
+    }
+
+    public function nombreCompleto(): string
+    {
+        return trim("{$this->nombre} {$this->apellido_paterno} {$this->apellido_materno}");
+    }
 }

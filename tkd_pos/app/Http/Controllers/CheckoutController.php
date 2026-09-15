@@ -2,15 +2,17 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Middleware\IdentificarAlumno;
 use App\Models\Venta;
 use App\Services\RegistrarVenta;
 use App\Support\Carrito;
+use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 
 class CheckoutController extends Controller
 {
-    public function store(Carrito $carrito, RegistrarVenta $registrarVenta): RedirectResponse
+    public function store(Request $request, Carrito $carrito, RegistrarVenta $registrarVenta): RedirectResponse
     {
         $lineas = $carrito->lineas();
 
@@ -19,6 +21,7 @@ class CheckoutController extends Controller
         }
 
         $venta = $registrarVenta->handle([
+            'alumno_id' => $request->session()->get(IdentificarAlumno::SESSION_KEY.'.id'),
             'metodo_pago' => 'pendiente',
             'estado' => 'pendiente_pago',
             'items' => $lineas->map(fn ($linea) => [

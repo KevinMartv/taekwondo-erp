@@ -30,7 +30,30 @@ class UserFactory extends Factory
             'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
             'remember_token' => Str::random(10),
+            'role' => 'alumno',
         ];
+    }
+
+    /**
+     * Nivel de acceso administrador: gestiona todo el alumnado y los cobros.
+     */
+    public function admin(): static
+    {
+        return $this->state(fn () => [
+            'role' => 'admin',
+            'alumno_id' => null,
+        ]);
+    }
+
+    /**
+     * Nivel de acceso alumno, ya vinculado a un expediente de tkd_alumnos.
+     */
+    public function alumno(?int $alumnoId = 1): static
+    {
+        return $this->state(fn () => [
+            'role' => 'alumno',
+            'alumno_id' => $alumnoId,
+        ]);
     }
 
     /**

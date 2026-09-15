@@ -9,6 +9,63 @@ services:
     volumes:
       - db_data:/var/lib/mysql
 
+  # Portal central: login, niveles de acceso y paneles de alumno/administrador
+  tkd_portal:
+    image: bitnami/laravel:latest
+    working_dir: /app
+    entrypoint: ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8000"]
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./tkd_portal:/app
+    environment:
+      APP_NAME: Dojang ERP
+      APP_URL: http://localhost:8000
+      # Los cuatro módulos viven en localhost: sin nombres de cookie distintos
+      # se pisarían la sesión entre ellos.
+      SESSION_COOKIE: tkd_portal_session
+      DB_CONNECTION: mysql
+      DB_HOST: tkd_db
+      DB_PORT: 3306
+      DB_DATABASE: escuela_taekwondo
+      DB_USERNAME: root
+      DB_PASSWORD: ${DB_ROOT_PASSWORD}
+      # URLs públicas (las abre el navegador)
+      ALUMNOS_URL: http://localhost:8001
+      PAGOS_URL: http://localhost:8002
+      POS_URL: http://localhost:8003
+      # URLs internas (las usa el portal para consumir las APIs)
+      ALUMNOS_INTERNAL_URL: http://tkd_alumnos:8000
+      PAGOS_INTERNAL_URL: http://tkd_pagos:8000
+      POS_INTERNAL_URL: http://tkd_pos:8000
+      PORTAL_SECRET: ${PORTAL_SECRET:-tkd-dev-portal-secret}
+      SUSCRIPCION_MONTO: ${SUSCRIPCION_MONTO:-500}
+    depends_on:
+      - tkd_db
+
+  # Expediente del alumnado: niveles, horarios y fechas de asistencia
+  tkd_alumnos:
+    image: bitnami/laravel:latest
+    working_dir: /app
+    entrypoint: ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8000"]
+    ports:
+      - "8001:8000"
+    volumes:
+      - ./tkd_alumnos:/app
+    environment:
+      APP_NAME: TKD Alumnos
+      APP_URL: http://localhost:8001
+      SESSION_COOKIE: tkd_alumnos_session
+      DB_CONNECTION: mysql
+      DB_HOST: tkd_db
+      DB_PORT: 3306
+      DB_DATABASE: escuela_taekwondo
+      DB_USERNAME: root
+      DB_PASSWORD: ${DB_ROOT_PASSWORD}
+    depends_on:
+      - tkd_db
+
+  # Cobros: mensualidades, vigencia de la suscripción y pasarela simulada
   tkd_pagos:
     image: bitnami/laravel:latest
     working_dir: /app
@@ -18,25 +75,27 @@ services:
     volumes:
       - ./tkd_pagos:/app
     environment:
+      APP_NAME: TKD Pagos
       APP_URL: http://localhost:8002
+      SESSION_COOKIE: tkd_pagos_session
+      DB_CONNECTION: mysql
+      DB_HOST: tkd_db
+      DB_PORT: 3306
+      DB_DATABASE: escuela_taekwondo
+      DB_USERNAME: root
+      DB_PASSWORD: ${DB_ROOT_PASSWORD}
       POS_URL: http://tkd_pos:8000
       POS_PUBLIC_URL: http://localhost:8003
       PAGO_SECRET: ${PAGO_SECRET:-tkd-dev-pago-secret}
+      PORTAL_URL: http://tkd_portal:8000
+      PORTAL_PUBLIC_URL: http://localhost:8000
+      PORTAL_SECRET: ${PORTAL_SECRET:-tkd-dev-portal-secret}
+      SUSCRIPCION_MONTO: ${SUSCRIPCION_MONTO:-500}
     depends_on:
       - tkd_db
       - tkd_pos
 
-  tkd_alumnos:
-    image: bitnami/laravel:latest
-    working_dir: /app
-    entrypoint: ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8000"]
-    ports:
-      - "8001:8000"
-    volumes:
-      - ./tkd_alumnos:/app
-    depends_on:
-      - tkd_db
-
+  # Punto de venta: catálogo, carrito y ventas
   tkd_pos:
     image: bitnami/laravel:latest
     working_dir: /app
@@ -46,25 +105,19 @@ services:
     volumes:
       - ./tkd_pos:/app
     environment:
+      APP_NAME: TKD POS
+      APP_URL: http://localhost:8003
+      SESSION_COOKIE: tkd_pos_session
+      DB_CONNECTION: mysql
+      DB_HOST: tkd_db
+      DB_PORT: 3306
+      DB_DATABASE: escuela_taekwondo
+      DB_USERNAME: root
+      DB_PASSWORD: ${DB_ROOT_PASSWORD}
       PAGOS_URL: http://localhost:8002
       PAGO_SECRET: ${PAGO_SECRET:-tkd-dev-pago-secret}
-      APP_URL: http://localhost:8003
-    depends_on:
-      - tkd_db
-  tkd_portal:
-    image: bitnami/laravel:latest 
-    working_dir: /app
-    entrypoint: ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8000"]
-    ports:
-      - "8000:8000"
-    volumes:
-      - ./tkd_portal:/app
-    environment:
-      - DB_HOST=tkd_db
-      - DB_PORT=3306
-      - DB_DATABASE=escuela_taekwondo
-      - DB_USERNAME=root
-      - DB_PASSWORD=${DB_ROOT_PASSWORD}
+      PORTAL_URL: http://localhost:8000
+      PORTAL_SECRET: ${PORTAL_SECRET:-tkd-dev-portal-secret}
     depends_on:
       - tkd_db
 

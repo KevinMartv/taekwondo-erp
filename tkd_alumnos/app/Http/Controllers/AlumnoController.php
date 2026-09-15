@@ -5,7 +5,9 @@ namespace App\Http\Controllers;
 use App\Models\Alumno;
 use App\Models\Nivel;
 use App\Models\Horario;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class AlumnoController extends Controller
 {
@@ -31,12 +33,13 @@ class AlumnoController extends Controller
             'telefono_contacto' => 'required|string|max:20',
             'nivel_id' => 'required|exists:niveles,id',
             'fecha_ingreso' => 'required|date',
-            'horarios' => 'required|array', // Array de IDs de horarios
+            // Opcional: el alumno que se registra desde el portal elige sus horarios después
+            'horarios' => 'nullable|array', // Array de IDs de horarios
             'horarios.*' => 'exists:horarios,id',
         ]);
 
         $alumno = Alumno::create($validated);
-        $alumno->horarios()->attach($request->horarios);
+        $alumno->horarios()->attach($request->input('horarios', []));
 
         return response()->json([
             'message' => 'Alumno registrado con éxito',
@@ -92,6 +95,49 @@ class AlumnoController extends Controller
         return response()->json([
             'message' => "El alumno ha sido {$estado} correctamente",
             'activo' => $alumno->activo
+        ]);
+    }
+
+    // Suspender / Activar de forma explícita (lo usa el panel de administrador)
+    public function cambiarEstado(Request $request, $id)
+    {
+        $validated = $request->validate([
+            'activo' => 'required|boolean',
+        ]);
+
+        $alumno = Alumno::findOrFail($id);
+        $alumno->activo = $validated['activo'];
+        $alumno->save();
+
+        return response()->json([
+            'message' => $alumno->activo
+                ? 'El alumno ha sido activado correctamente'
+                : 'El alumno ha sido suspendido correctamente',
+            'activo' => $alumno->activo,
+        ]);
+    }
+
+    // Borrado definitivo del expediente
+    public function destroy($id)
+    {
+        $alumno = Alumno::findOrFail($id);
+
+        // El módulo de pagos referencia alumno_id con ON DELETE RESTRICT: si hay
+        // historial de cobros el expediente no se puede borrar, sólo suspender.
+        // La transacción evita que un borrado rechazado deje al alumno sin horarios.
+        try {
+            DB::transaction(function () use ($alumno) {
+                $alumno->horarios()->detach();
+                $alumno->delete();
+            });
+        } catch (QueryException $e) {
+            return response()->json([
+                'message' => 'No se puede borrar el alumno porque tiene pagos registrados. Suspéndelo en lugar de borrarlo.',
+            ], 409);
+        }
+
+        return response()->json([
+            'message' => 'Alumno eliminado correctamente',
         ]);
     }
 }

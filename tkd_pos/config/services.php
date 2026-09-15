@@ -40,4 +40,9 @@ return [
         'secret' => env('PAGO_SECRET', 'tkd-dev-pago-secret'),
     ],
 
+    'portal' => [
+        'url' => env('PORTAL_URL', 'http://localhost:8000'),
+        'secret' => env('PORTAL_SECRET', 'tkd-dev-portal-secret'),
+    ],
+
 ];

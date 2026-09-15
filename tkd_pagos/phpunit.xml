@@ -18,22 +18,31 @@
         </include>
     </source>
     <php>
-        <env name="APP_ENV" value="testing"/>
-        <env name="APP_MAINTENANCE_DRIVER" value="file"/>
-        <env name="BCRYPT_ROUNDS" value="4"/>
-        <env name="BROADCAST_CONNECTION" value="null"/>
-        <env name="CACHE_STORE" value="array"/>
-        <env name="DB_CONNECTION" value="sqlite"/>
-        <env name="DB_DATABASE" value=":memory:"/>
-        <env name="DB_URL" value=""/>
-        <env name="MAIL_MAILER" value="array"/>
-        <env name="QUEUE_CONNECTION" value="sync"/>
-        <env name="SESSION_DRIVER" value="array"/>
-        <env name="PULSE_ENABLED" value="false"/>
-        <env name="TELESCOPE_ENABLED" value="false"/>
-        <env name="NIGHTWATCH_ENABLED" value="false"/>
-        <env name="POS_URL" value="http://pos.test"/>
-        <env name="POS_PUBLIC_URL" value="http://pos.test"/>
-        <env name="PAGO_SECRET" value="test-secret"/>
+        <!--
+        | Se declaran como <server> y no como <env>: al correr dentro de Docker las
+        | variables del contenedor llegan en $_SERVER, que tiene prioridad sobre
+        | $_ENV en Dotenv. Si sólo usáramos <env> las pruebas atacarían la base de
+        | datos MySQL compartida y los secretos de desarrollo.
+        -->
+        <server name="APP_ENV" value="testing"/>
+        <server name="APP_MAINTENANCE_DRIVER" value="file"/>
+        <server name="BCRYPT_ROUNDS" value="4"/>
+        <server name="BROADCAST_CONNECTION" value="null"/>
+        <server name="CACHE_STORE" value="array"/>
+        <server name="DB_CONNECTION" value="sqlite"/>
+        <server name="DB_DATABASE" value=":memory:"/>
+        <server name="MAIL_MAILER" value="array"/>
+        <server name="QUEUE_CONNECTION" value="sync"/>
+        <server name="SESSION_DRIVER" value="array"/>
+        <server name="PULSE_ENABLED" value="false"/>
+        <server name="TELESCOPE_ENABLED" value="false"/>
+        <server name="NIGHTWATCH_ENABLED" value="false"/>
+        <server name="POS_URL" value="http://pos.test"/>
+        <server name="POS_PUBLIC_URL" value="http://pos.test"/>
+        <server name="PAGO_SECRET" value="test-secret"/>
+        <server name="PORTAL_URL" value="http://portal.test"/>
+        <server name="PORTAL_PUBLIC_URL" value="http://portal.test"/>
+        <server name="PORTAL_SECRET" value="test-portal-secret"/>
+        <server name="SUSCRIPCION_MONTO" value="500"/>
     </php>
 </phpunit>

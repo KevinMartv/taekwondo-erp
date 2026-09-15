@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
@@ -10,13 +9,12 @@ class DatabaseSeeder extends Seeder
 {
     use WithoutModelEvents;
 
+    /**
+     * Las cuentas de acceso las administra tkd_portal (tabla compartida
+     * users), así que aquí sólo sembramos el catálogo de la tienda.
+     */
     public function run(): void
     {
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-        ]);
-
         $this->call(ProductoSeeder::class);
     }
 }

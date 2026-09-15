@@ -25,7 +25,7 @@
                     <input type="text" name="titular" value="{{ old('titular') }}" placeholder="Nombre como aparece en la tarjeta">
                 </label>
                 <label>Número
-                    <input type="text" name="numero" value="{{ old('numero') }}" inputmode="numeric" placeholder="4242424242424242" maxlength="19">
+                    <input type="text" name="numero" value="{{ old('numero') }}" inputmode="numeric" placeholder="4242 4242 4242 4242" maxlength="23">
                 </label>
                 <div class="pay-row">
                     <label>Vencimiento
