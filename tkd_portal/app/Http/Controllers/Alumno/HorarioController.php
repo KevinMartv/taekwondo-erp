@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Alumno;
 use App\Exceptions\ModuloException;
 use App\Http\Controllers\Controller;
 use App\Services\ModuloAlumnos;
+use App\Services\ModuloPagos;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -34,7 +35,7 @@ class HorarioController extends Controller
         ]);
     }
 
-    public function update(Request $request, ModuloAlumnos $alumnos): RedirectResponse
+    public function update(Request $request, ModuloAlumnos $alumnos, ModuloPagos $pagos): RedirectResponse
     {
         $alumnoId = (int) $request->user()->expedienteId();
 
@@ -42,6 +43,16 @@ class HorarioController extends Controller
             'horarios' => ['array'],
             'horarios.*' => ['integer'],
         ]);
+
+        // Misma regla que para reservar asistencias: sin suscripción vigente
+        // no se puede tomar un lugar en un grupo de entrenamiento.
+        $estadoCuenta = $pagos->estadoCuentaSeguro($alumnoId);
+        if ($estadoCuenta['vigente'] !== true) {
+            return back()->with(
+                'error',
+                'Necesitas estar al corriente con tu suscripción para elegir tus horarios de entrenamiento. Renueva tu mensualidad primero.'
+            );
+        }
 
         try {
             $alumnos->actualizar($alumnoId, [

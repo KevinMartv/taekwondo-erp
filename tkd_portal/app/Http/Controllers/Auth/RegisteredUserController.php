@@ -36,13 +36,17 @@ class RegisteredUserController extends Controller
         $niveles = $this->nivelesDisponibles($alumnos);
         $expedienteDisponible = $niveles !== [];
 
+        // El cinturón inicial siempre es el de menor "orden" del catálogo
+        // (p. ej. blanco). El alumno no lo elige: solo el administrador
+        // puede promoverlo después desde el panel de administración.
+        $nivelInicial = $expedienteDisponible ? ($niveles[0]['id'] ?? null) : null;
+
         $validated = $request->validate([
             'nombre' => ['required', 'string', 'max:100'],
             'apellido_paterno' => ['required', 'string', 'max:100'],
             'apellido_materno' => ['nullable', 'string', 'max:100'],
             'fecha_nacimiento' => ['required', 'date', 'before:today'],
             'telefono_contacto' => ['required', 'string', 'max:20'],
-            'nivel_id' => [$expedienteDisponible ? 'required' : 'nullable', 'integer'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
@@ -64,7 +68,7 @@ class RegisteredUserController extends Controller
                     'apellido_materno' => $validated['apellido_materno'] ?? null,
                     'fecha_nacimiento' => $validated['fecha_nacimiento'],
                     'telefono_contacto' => $validated['telefono_contacto'],
-                    'nivel_id' => $validated['nivel_id'],
+                    'nivel_id' => $nivelInicial,
                     'fecha_ingreso' => Carbon::today()->toDateString(),
                 ]);
 

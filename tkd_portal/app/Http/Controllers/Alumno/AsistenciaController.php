@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Alumno;
 use App\Exceptions\ModuloException;
 use App\Http\Controllers\Controller;
 use App\Services\ModuloAlumnos;
+use App\Services\ModuloPagos;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -38,7 +39,7 @@ class AsistenciaController extends Controller
         ]);
     }
 
-    public function store(Request $request, ModuloAlumnos $alumnos): RedirectResponse
+    public function store(Request $request, ModuloAlumnos $alumnos, ModuloPagos $pagos): RedirectResponse
     {
         $alumnoId = (int) $request->user()->expedienteId();
 
@@ -46,6 +47,17 @@ class AsistenciaController extends Controller
             'fecha' => ['required', 'date', 'after_or_equal:today'],
             'horario_id' => ['nullable', 'integer'],
         ]);
+
+        // Regla de negocio: no se puede reservar una clase sin tener la
+        // suscripción vigente. Se consulta al módulo de Pagos, que es el
+        // único dueño de ese dato.
+        $estadoCuenta = $pagos->estadoCuentaSeguro($alumnoId);
+        if ($estadoCuenta['vigente'] !== true) {
+            return back()->withInput()->with(
+                'error',
+                'Necesitas estar al corriente con tu suscripción para reservar una clase. Renueva tu mensualidad primero.'
+            );
+        }
 
         try {
             $alumnos->reservarAsistencia($alumnoId, $validated);

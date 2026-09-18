@@ -10,6 +10,10 @@
     <header class="pay-header">
         <div class="pay-header__inner">
             <span class="pay-logo">TKD Pagos</span>
+            @isset($intencion)
+                <a href="{{ $intencion['return_url'] }}{{ str_contains($intencion['return_url'], '?') ? '&' : '?' }}suscripcion=cancelado"
+                   class="pay-back">&larr; Volver a mi cuenta</a>
+            @endisset
             <span class="pay-secure">Pago seguro</span>
         </div>
     </header>

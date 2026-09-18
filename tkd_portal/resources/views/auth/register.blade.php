@@ -47,16 +47,10 @@
 
             @if ($niveles !== [])
                 <div class="sm:col-span-2">
-                    <x-input-label for="nivel_id" value="Grado actual" />
-                    <select id="nivel_id" name="nivel_id" required
-                            class="block mt-1 w-full border-gray-300 focus:border-red-500 focus:ring-red-500 rounded-md shadow-sm">
-                        @foreach ($niveles as $nivel)
-                            <option value="{{ $nivel['id'] }}" @selected(old('nivel_id') == $nivel['id'])>
-                                {{ $nivel['nombre'] }}
-                            </option>
-                        @endforeach
-                    </select>
-                    <x-input-error :messages="$errors->get('nivel_id')" class="mt-2" />
+                    <p class="text-xs text-gray-500">
+                        Tu cuenta inicia con el grado más básico ({{ $niveles[0]['nombre'] ?? 'inicial' }}).
+                        El instructor lo actualizará conforme avances.
+                    </p>
                 </div>
             @endif
 

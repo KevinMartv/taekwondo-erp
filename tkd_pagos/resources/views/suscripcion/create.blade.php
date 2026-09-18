@@ -47,6 +47,8 @@
             </label>
 
             <button class="pay-btn" type="submit">Pagar ${{ number_format((float) $intencion['monto'], 2) }} MXN</button>
+            <a href="{{ $intencion['return_url'] }}{{ str_contains($intencion['return_url'], '?') ? '&' : '?' }}suscripcion=cancelado"
+               class="pay-cancel">Cancelar</a>
             <p class="pay-muted">Al confirmar registramos el cobro y regresas a tu cuenta del portal.</p>
         </form>
 
