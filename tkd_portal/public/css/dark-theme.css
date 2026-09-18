@@ -1,0 +1,74 @@
+/*
+ * Reskin oscuro del portal (Dojang ERP), para que combine con la
+ * portada (bg-gray-900). El portal usa clases de Tailwind directamente
+ * en los .blade.php (Breeze), así que en vez de reescribir cada vista,
+ * sobreescribimos aquí las clases más usadas. Los !important son
+ * necesarios porque Tailwind vía CDN inyecta su propio <style> y el
+ * orden de inserción en el DOM no está garantizado.
+ */
+
+:root {
+    --tkd-bg: #111827;      /* gray-900 */
+    --tkd-surface: #1f2430; /* tarjetas / nav */
+    --tkd-border: rgba(255, 255, 255, 0.1);
+    --tkd-text: #f3f4f6;    /* gray-100 */
+    --tkd-muted: #9ca3af;   /* gray-400 */
+    --tkd-red: #dc2626;
+}
+
+html, body { background-color: var(--tkd-bg) !important; }
+body { color: var(--tkd-text) !important; }
+
+/* Fondos de página y superficies */
+.bg-gray-100, .bg-gray-50, .bg-white, .bg-gray-200 {
+    background-color: var(--tkd-surface) !important;
+}
+
+/* Textos */
+.text-gray-900, .text-gray-800, .text-gray-700 {
+    color: var(--tkd-text) !important;
+}
+.text-gray-600, .text-gray-500, .text-gray-400 {
+    color: var(--tkd-muted) !important;
+}
+
+/* Bordes */
+.border-gray-100, .border-gray-200, .border-gray-300 {
+    border-color: var(--tkd-border) !important;
+}
+
+/* Sombras: casi invisibles sobre fondo oscuro, las cambiamos por borde sutil */
+.shadow, .shadow-sm, .shadow-md, .shadow-xl {
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5) !important;
+}
+
+/* Inputs y selects (formularios de Breeze) */
+input[type="text"], input[type="email"], input[type="password"],
+input[type="date"], input[type="tel"], input[type="number"], select, textarea {
+    background-color: var(--tkd-bg) !important;
+    color: var(--tkd-text) !important;
+    border-color: var(--tkd-border) !important;
+}
+input::placeholder { color: var(--tkd-muted) !important; }
+
+/* Botón primario (Breeze) ya usa bg-gray-800; lo pasamos a rojo para
+   que combine con el acento de la portada */
+.bg-gray-800 {
+    background-color: var(--tkd-red) !important;
+}
+.bg-gray-800:hover, .hover\:bg-gray-700:hover {
+    background-color: #b91c1c !important;
+}
+
+/* Dropdown / menús flotantes de Breeze */
+.bg-white { background-color: var(--tkd-surface) !important; }
+
+/* Hover de filas / botones sutiles */
+.hover\:bg-gray-100:hover, .hover\:text-gray-700:hover, .focus\:bg-gray-100:focus {
+    background-color: rgba(255, 255, 255, 0.06) !important;
+}
+
+/* Alertas (usan colores de status, los dejamos legibles en oscuro) */
+.bg-amber-50 { background-color: rgba(217, 119, 6, 0.15) !important; color: #fcd34d !important; }
+.bg-red-50 { background-color: rgba(220, 38, 38, 0.15) !important; }
+.bg-green-50 { background-color: rgba(22, 163, 74, 0.15) !important; }
