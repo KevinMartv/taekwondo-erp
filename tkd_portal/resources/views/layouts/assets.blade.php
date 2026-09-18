@@ -12,3 +12,4 @@
         body { font-family: Figtree, ui-sans-serif, system-ui, sans-serif; }
     </style>
 @endif
+<link rel="stylesheet" href="{{ asset('css/dark-theme.css') }}">
